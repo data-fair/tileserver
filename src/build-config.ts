@@ -1,6 +1,7 @@
-import { mkdir, writeFile } from 'node:fs/promises'
+import { mkdir, rm, writeFile } from 'node:fs/promises'
+import { createReadStream } from 'node:fs'
 import { join, relative } from 'node:path'
-import { ensureArtefact, ensureArtefactFile } from '@data-fair/lib-node-registry'
+import { ensureArtefactFile, extractTarball } from '@data-fair/lib-node-registry'
 import config from '#config'
 import log from '#log'
 import { listArtefacts, type Artefact } from './registry-client.ts'
@@ -34,17 +35,19 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
     root: config.dataDir,
     mbtiles: join(cacheRoot, 'tilesets'),
     styles: join(cacheRoot, 'styles'),
-    fonts: join(cacheRoot, 'fonts'),
+    fonts: config.fontsDir,
     sprites: join(cacheRoot, 'sprites')
   }
-  for (const d of Object.values(dirs)) await mkdir(d, { recursive: true })
+  for (const d of [dirs.root, dirs.mbtiles, dirs.styles, dirs.sprites]) await mkdir(d, { recursive: true })
+  const styleTarballs = join(cacheRoot, 'style-tarballs')
+  await mkdir(styleTarballs, { recursive: true })
 
   log.info('listing tilesets from registry...')
   const tilesets = await listArtefacts({ category: 'tileset', format: 'file' })
   log.info(`found ${tilesets.length} tilesets`)
 
   log.info('listing styles from registry...')
-  const styles = await listArtefacts({ category: 'maplibre-style' })
+  const styles = await listArtefacts({ category: 'maplibre-style', format: 'file' })
   log.info(`found ${styles.length} styles`)
 
   const data: TileserverConfig['data'] = {}
@@ -66,13 +69,20 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
   const stylesCfg: TileserverConfig['styles'] = {}
   for (const s of styles) {
     log.info(`ensuring style ${s._id}...`)
-    const { path: styleDir } = await ensureArtefact({
+    const { path: tarballPath, downloaded } = await ensureArtefactFile({
       registryUrl: config.registryUrl,
       secretKey: config.registrySecret,
       artefactId: s._id,
-      version: 'latest',
-      cacheDir: dirs.styles
+      cacheDir: styleTarballs,
+      fileName: `${s._id}.tgz`
     })
+    const styleDir = join(dirs.styles, s._id)
+    if (downloaded) {
+      log.info(`style ${s._id} downloaded, extracting...`)
+      await rm(styleDir, { recursive: true, force: true })
+      await mkdir(styleDir, { recursive: true })
+      await extractTarball(createReadStream(tarballPath), styleDir)
+    }
     const styleName = stylePackageName(s)
     await normalizeStyle({ styleDir, styleName, tilesetIds })
     const rel = relative(dirs.styles, join(styleDir, 'style.json'))
