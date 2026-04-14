@@ -1,0 +1,97 @@
+import { mkdir, writeFile } from 'node:fs/promises'
+import { join, relative } from 'node:path'
+import { ensureArtefact, ensureArtefactFile } from '@data-fair/lib-node-registry'
+import config from '#config'
+import log from '#log'
+import { listArtefacts, type Artefact } from './registry-client.ts'
+import { normalizeStyle } from './style-normalize.ts'
+
+export interface TileserverConfig {
+  options: {
+    paths: {
+      root: string
+      mbtiles: string
+      styles: string
+      fonts: string
+      sprites: string
+    }
+    serveAllStyles: boolean
+    serveAllFonts: boolean
+    formatQuality: { jpeg: number, webp: number }
+  }
+  styles: Record<string, { style: string }>
+  data: Record<string, { mbtiles: string }>
+}
+
+const stylePackageName = (a: Artefact): string => {
+  const name = a.name.replace(/^@[^/]+\//, '')
+  return name.replace(/[^a-z0-9_-]/gi, '-')
+}
+
+export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
+  const cacheRoot = join(config.dataDir, 'cache')
+  const dirs = {
+    root: config.dataDir,
+    mbtiles: join(cacheRoot, 'tilesets'),
+    styles: join(cacheRoot, 'styles'),
+    fonts: join(cacheRoot, 'fonts'),
+    sprites: join(cacheRoot, 'sprites')
+  }
+  for (const d of Object.values(dirs)) await mkdir(d, { recursive: true })
+
+  log.info('listing tilesets from registry...')
+  const tilesets = await listArtefacts({ category: 'tileset', format: 'file' })
+  log.info(`found ${tilesets.length} tilesets`)
+
+  log.info('listing styles from registry...')
+  const styles = await listArtefacts({ category: 'maplibre-style' })
+  log.info(`found ${styles.length} styles`)
+
+  const data: TileserverConfig['data'] = {}
+  const tilesetIds = new Set<string>()
+  for (const t of tilesets) {
+    log.info(`ensuring tileset ${t._id}...`)
+    const { downloaded } = await ensureArtefactFile({
+      registryUrl: config.registryUrl,
+      secretKey: config.registrySecret,
+      artefactId: t._id,
+      cacheDir: dirs.mbtiles,
+      fileName: `${t._id}.mbtiles`
+    })
+    if (downloaded) log.info(`tileset ${t._id} downloaded`)
+    data[t._id] = { mbtiles: `${t._id}.mbtiles` }
+    tilesetIds.add(t._id)
+  }
+
+  const stylesCfg: TileserverConfig['styles'] = {}
+  for (const s of styles) {
+    log.info(`ensuring style ${s._id}...`)
+    const { path: styleDir } = await ensureArtefact({
+      registryUrl: config.registryUrl,
+      secretKey: config.registrySecret,
+      artefactId: s._id,
+      version: 'latest',
+      cacheDir: dirs.styles
+    })
+    const styleName = stylePackageName(s)
+    await normalizeStyle({ styleDir, styleName, tilesetIds })
+    const rel = relative(dirs.styles, join(styleDir, 'style.json'))
+    stylesCfg[styleName] = { style: rel }
+  }
+
+  const tileserverCfg: TileserverConfig = {
+    options: {
+      paths: dirs,
+      serveAllStyles: false,
+      serveAllFonts: true,
+      formatQuality: { jpeg: 80, webp: 90 }
+    },
+    styles: stylesCfg,
+    data
+  }
+
+  await writeFile(join(config.dataDir, 'config.json'), JSON.stringify(tileserverCfg, null, 2))
+  log.info(`wrote ${join(config.dataDir, 'config.json')}`)
+
+  return tileserverCfg
+}

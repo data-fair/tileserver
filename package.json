@@ -1,0 +1,51 @@
+{
+  "name": "@data-fair/tileserver",
+  "version": "0.0.1",
+  "description": "Vector tile server for the data-fair stack. Wraps tileserver-gl-light and pulls tilesets and styles from a data-fair/registry instance at boot.",
+  "type": "module",
+  "license": "AGPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/data-fair/tileserver.git"
+  },
+  "bugs": {
+    "url": "https://github.com/data-fair/tileserver/issues"
+  },
+  "homepage": "https://github.com/data-fair/tileserver#readme",
+  "imports": {
+    "#config": "./src/config.ts",
+    "#log": "./src/log.ts"
+  },
+  "scripts": {
+    "dev": "mkdir -p dev/logs && NODE_ENV=development nodemon -e ts,json src/index.ts 2>&1 | tee dev/logs/dev.log",
+    "dev-deps": "mkdir -p dev/logs && docker compose up 2>&1 | tee dev/logs/docker-compose.log",
+    "lint": "eslint .",
+    "lint-fix": "eslint --fix .",
+    "check-types": "tsc",
+    "test": "playwright test --project=unit --max-failures=1 && playwright test --project=api --max-failures=1",
+    "quality": "npm run lint && npm run check-types && npm run test",
+    "prepare": "husky || true"
+  },
+  "dependencies": {
+    "@data-fair/lib-node": "^2.12.0",
+    "@data-fair/lib-node-registry": "file:../registry/lib-node",
+    "express": "^5.0.0",
+    "helmet": "^8.1.0",
+    "http-terminator": "^3.2.0",
+    "tileserver-gl-light": "^4.12.1",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@commitlint/config-conventional": "^19.2.2",
+    "@playwright/test": "^1.58.2",
+    "@types/express": "^5.0.6",
+    "@types/node": "^22.12.0",
+    "commitlint": "^19.2.2",
+    "dotenv": "^17.3.1",
+    "eslint": "^9.10.0",
+    "husky": "^9.1.6",
+    "neostandard": "^0.12.2",
+    "nodemon": "^3.1.14",
+    "typescript": "~5.6.3"
+  }
+}

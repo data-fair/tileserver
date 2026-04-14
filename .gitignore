@@ -1,0 +1,5 @@
+node_modules/
+dev/logs/
+dev/data/
+.env
+test-results/

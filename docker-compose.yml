@@ -1,0 +1,24 @@
+services:
+  mongo:
+    image: mongo:8.0.17
+    command: ["mongod", "--quiet"]
+    ports:
+      - ${MONGO_PORT}:27017
+    volumes:
+      - mongo-data:/data/db
+
+  # data-fair/registry instance used as the source of tilesets and styles in dev.
+  # Point tileserver at http://localhost:${REGISTRY_PORT} via REGISTRY_URL.
+  registry:
+    image: ghcr.io/data-fair/registry:main
+    network_mode: host
+    depends_on:
+      - mongo
+    environment:
+      PORT: ${REGISTRY_PORT}
+      MONGO_URL: mongodb://localhost:${MONGO_PORT}/registry
+      OBSERVER_ACTIVE: "false"
+      SECRET_KEYS_INTERNAL_SERVICES: ${REGISTRY_SECRET}
+
+volumes:
+  mongo-data:
