@@ -9,8 +9,11 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   reporter: 'list',
 
+  globalSetup: './tests/support/global-setup.ts',
+  globalTeardown: './tests/support/global-teardown.ts',
+
   use: {
-    baseURL: 'http://localhost:' + process.env.DEV_PORT,
+    baseURL: process.env.TEST_TILESERVER_URL,
     trace: 'on-first-retry'
   },
 

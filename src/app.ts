@@ -1,19 +1,36 @@
+import { type Server } from 'node:http'
 import express, { type Express, type Request, type Response, type NextFunction } from 'express'
 import helmet from 'helmet'
 // @ts-expect-error no types shipped with tileserver-gl-light
-import tileserverGl from 'tileserver-gl-light'
+import { server as tileserverGl } from 'tileserver-gl-light/src/server.js'
 import config from '#config'
 import log from '#log'
 import { buildTileserverConfig } from './build-config.ts'
 
+interface TileserverRunning {
+  app: Express
+  server: Server
+  startupPromise: Promise<unknown>
+}
+
 export const createApp = async (): Promise<Express> => {
   const tileserverConfig = await buildTileserverConfig()
 
-  const tsApp: Express = await tileserverGl({
+  // tileserver-gl-light's `server()` both builds the express app AND calls `.listen()` on
+  // an internal http server — there is no "just give me the app" entry point. We bind it to
+  // an ephemeral port, wait for its async init, then close the inner socket and reuse the
+  // still-fully-wired express app as middleware under our own outer http server.
+  const running = tileserverGl({
     config: tileserverConfig,
     publicUrl: config.publicUrl,
-    port: config.port
+    port: 0,
+    silent: true
+  }) as TileserverRunning
+  await running.startupPromise
+  await new Promise<void>((resolve, reject) => {
+    running.server.close((err) => err ? reject(err) : resolve())
   })
+  const tsApp = running.app
 
   const app = express()
 

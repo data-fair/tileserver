@@ -9,7 +9,7 @@ const EnvSchema = z.object({
   PORT: z.coerce.number().int().positive().default(8080),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
   ARTEFACTS_PAGE_SIZE: z.coerce.number().int().positive().default(100),
-  OBSERVER_ACTIVE: z.coerce.boolean().default(true),
+  OBSERVER_ACTIVE: z.enum(['true', 'false']).default('true').transform(v => v === 'true'),
   OBSERVER_PORT: z.coerce.number().int().positive().default(9090)
 })
 

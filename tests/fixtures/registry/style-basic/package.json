@@ -1,0 +1,8 @@
+{
+  "name": "basic",
+  "version": "1.0.0",
+  "description": "Minimal maplibre style used as a test fixture.",
+  "registry": {
+    "category": "maplibre-style"
+  }
+}

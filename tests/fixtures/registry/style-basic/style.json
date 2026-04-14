@@ -1,0 +1,19 @@
+{
+  "version": 8,
+  "name": "basic",
+  "sources": {
+    "openmaptiles": {
+      "type": "vector",
+      "url": "mbtiles://{tileset-world}"
+    }
+  },
+  "glyphs": "https://example.invalid/{fontstack}/{range}.pbf",
+  "sprite": "https://example.invalid/sprite",
+  "layers": [
+    {
+      "id": "background",
+      "type": "background",
+      "paint": { "background-color": "#ffffff" }
+    }
+  ]
+}
