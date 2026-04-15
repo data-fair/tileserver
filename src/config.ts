@@ -5,10 +5,8 @@ const EnvSchema = z.object({
   REGISTRY_SECRET: z.string().min(1),
   DATA_DIR: z.string().default('/data'),
   FONTS_DIR: z.string().default('/app/fonts'),
-  PUBLIC_URL: z.string().url().optional(),
   PORT: z.coerce.number().int().positive().default(8080),
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
-  ARTEFACTS_PAGE_SIZE: z.coerce.number().int().positive().default(100),
   OBSERVER_ACTIVE: z.enum(['true', 'false']).default('true').transform(v => v === 'true'),
   OBSERVER_PORT: z.coerce.number().int().positive().default(9090)
 })
@@ -29,10 +27,8 @@ const config = {
   registrySecret: env.REGISTRY_SECRET,
   dataDir: env.DATA_DIR,
   fontsDir: env.FONTS_DIR,
-  publicUrl: env.PUBLIC_URL,
   port: env.PORT,
   logLevel: env.LOG_LEVEL,
-  artefactsPageSize: env.ARTEFACTS_PAGE_SIZE,
   observer: {
     active: env.OBSERVER_ACTIVE,
     port: env.OBSERVER_PORT

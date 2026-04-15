@@ -12,7 +12,6 @@ export interface Artefact {
 
 interface ListResponse {
   results: Artefact[]
-  count: number
 }
 
 const ax = axiosBuilder({
@@ -21,16 +20,8 @@ const ax = axiosBuilder({
 })
 
 export const listArtefacts = async (query: Record<string, string | number>): Promise<Artefact[]> => {
-  const size = config.artefactsPageSize
-  const results: Artefact[] = []
-  let skip = 0
-  for (;;) {
-    const res = await ax.get<ListResponse>('/api/v1/artefacts', {
-      params: { ...query, size, skip }
-    })
-    results.push(...res.data.results)
-    skip += res.data.results.length
-    if (skip >= res.data.count || res.data.results.length === 0) break
-  }
-  return results
+  const res = await ax.get<ListResponse>('/api/v1/artefacts', {
+    params: { ...query, size: 1000 }
+  })
+  return res.data.results
 }

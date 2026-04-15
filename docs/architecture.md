@@ -65,10 +65,8 @@ A single Node.js process owns the whole lifecycle: it performs the registry sync
 | `REGISTRY_URL`    | yes      | —              | Base URL of the data-fair/registry instance.                            |
 | `REGISTRY_SECRET` | yes      | —              | Secret passed as `x-secret-key` for download endpoints.                 |
 | `DATA_DIR`        | no       | `/data`        | Root of the persistent volume (cache + generated `config.json`).        |
-| `PUBLIC_URL`      | no       | —              | Public base URL forwarded to tileserver-gl-light.                       |
 | `PORT`            | no       | `8080`         | Port the embedded tileserver-gl-light app binds to.                     |
 | `LOG_LEVEL`       | no       | `info`         | Log level for the wrapper.                                              |
-| `ARTEFACTS_PAGE_SIZE` | no   | `100`          | Page size used when listing artefacts.                                  |
 
 Additional `TILESERVER_*` passthroughs may be added later as needed. v1 keeps the surface minimal.
 
@@ -94,13 +92,13 @@ CMD ["node", "src/index.ts"]
 
 1. Parse env via a zod schema; fail fast on missing `REGISTRY_URL` / `REGISTRY_SECRET`.
 2. Ensure `${DATA_DIR}/cache/{tilesets,styles,fonts,sprites}` exist.
-3. List tilesets: `GET ${REGISTRY_URL}/api/v1/artefacts?category=tileset&format=file&size=${ARTEFACTS_PAGE_SIZE}&skip=…` until pagination is exhausted.
-4. List styles: `GET ${REGISTRY_URL}/api/v1/artefacts?category=style&size=…&skip=…` (npm-packaged artefacts).
+3. List tilesets: `GET ${REGISTRY_URL}/api/v1/artefacts?category=tileset&format=file&size=1000` (single request — we never expect more than that many).
+4. List styles: `GET ${REGISTRY_URL}/api/v1/artefacts?category=style&size=1000` (npm-packaged artefacts).
 5. For each tileset: `ensureArtefact({ artefactId: t._id, cacheDir })` → yields a local `.mbtiles` path.
 6. For each style: resolve the latest version via `GET /api/v1/artefacts/:id/versions/latest` (or equivalent), then `ensureArtefact({ artefactId, version, cacheDir })`. The helper extracts the tarball atomically.
 7. Normalize each extracted style: parse its `style.json`, rewrite `glyphs` / `sprite` / `sources` entries to point at the locally cached files (see §7), and write the normalized copy next to the original.
 8. Build the tileserver config in memory (see §8). Also serialize it to `${DATA_DIR}/config.json` for debuggability — tileserver-gl-light is still fed the in-memory object, the on-disk copy is purely informational.
-9. `require('tileserver-gl-light')` → obtain the Express app factory, instantiate it with the in-memory config (and resolved `publicUrl` / `port` options), then `app.listen(PORT)`. The wrapper stays PID 1 and handles `SIGTERM`/`SIGINT` by closing the HTTP server cleanly.
+9. `require('tileserver-gl-light')` → obtain the Express app factory, instantiate it with the in-memory config (and resolved `port` option), then `app.listen(PORT)`. Absolute URLs in TileJSON / style responses are derived per-request from `X-Forwarded-Host` and `X-Forwarded-Proto`, matching the data-fair multi-domain convention (cf. `@data-fair/lib-express/req-origin`). The wrapper stays PID 1 and handles `SIGTERM`/`SIGINT` by closing the HTTP server cleanly.
 
 If any fetch fails, the service logs the offending artefact and exits non-zero — the container is expected to be restarted by its orchestrator, or redeployed once the registry state is fixed.
 
