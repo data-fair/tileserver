@@ -4,7 +4,6 @@ import { join, relative } from 'node:path'
 import { pipeline } from 'node:stream/promises'
 import { createGzip } from 'node:zlib'
 import sqlite3 from 'sqlite3'
-// @ts-expect-error no types shipped with tar-stream
 import tarStream from 'tar-stream'
 
 interface RunnableDb {
@@ -87,7 +86,7 @@ export const packStyleTarball = async (sourceDir: string, destPath: string): Pro
     const content = await readFile(absPath)
     const st = await stat(absPath)
     await new Promise<void>((resolve, reject) => {
-      pack.entry({ name, size: content.length, mode: st.mode }, content, (err: Error | null) => {
+      pack.entry({ name, size: content.length, mode: st.mode }, content, (err) => {
         if (err) reject(err)
         else resolve()
       })
