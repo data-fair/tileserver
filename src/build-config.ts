@@ -24,6 +24,13 @@ export interface TileserverConfig {
   data: Record<string, { mbtiles: string }>
 }
 
+const filterArtefacts = (artefacts: Artefact[], include: string[], exclude: string[]): Artefact[] => {
+  let filtered = artefacts
+  if (include.length) filtered = filtered.filter(a => include.includes(a._id))
+  if (exclude.length) filtered = filtered.filter(a => !exclude.includes(a._id))
+  return filtered
+}
+
 const stylePackageName = (a: Artefact): string => {
   const name = a.name.replace(/^@[^/]+\//, '')
   return name.replace(/[^a-z0-9_-]/gi, '-')
@@ -50,9 +57,14 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
   const styles = await listArtefacts({ category: 'maplibre-style', format: 'file' })
   log.info(`found ${styles.length} styles`)
 
+  const filteredTilesets = filterArtefacts(tilesets, config.tilesetInclude, config.tilesetExclude)
+  if (filteredTilesets.length !== tilesets.length) {
+    log.info(`filtered to ${filteredTilesets.length} tilesets`)
+  }
+
   const data: TileserverConfig['data'] = {}
   const tilesetIds = new Set<string>()
-  for (const t of tilesets) {
+  for (const t of filteredTilesets) {
     log.info(`ensuring tileset ${t._id}...`)
     const { downloaded } = await ensureArtefactFile({
       registryUrl: config.registryUrl,
@@ -62,12 +74,18 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
       fileName: `${t._id}.mbtiles`
     })
     if (downloaded) log.info(`tileset ${t._id} downloaded`)
-    data[t._id] = { mbtiles: `${t._id}.mbtiles` }
-    tilesetIds.add(t._id)
+    const dataKey = config.tilesetAliases[t._id] ?? t._id
+    data[dataKey] = { mbtiles: `${t._id}.mbtiles` }
+    tilesetIds.add(dataKey)
+  }
+
+  const filteredStyles = filterArtefacts(styles, config.styleInclude, config.styleExclude)
+  if (filteredStyles.length !== styles.length) {
+    log.info(`filtered to ${filteredStyles.length} styles`)
   }
 
   const stylesCfg: TileserverConfig['styles'] = {}
-  for (const s of styles) {
+  for (const s of filteredStyles) {
     log.info(`ensuring style ${s._id}...`)
     const { path: tarballPath, downloaded } = await ensureArtefactFile({
       registryUrl: config.registryUrl,
@@ -83,7 +101,7 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
       await mkdir(styleDir, { recursive: true })
       await extractTarball(createReadStream(tarballPath), styleDir)
     }
-    const styleName = stylePackageName(s)
+    const styleName = config.styleAliases[s._id] ?? stylePackageName(s)
     await normalizeStyle({ styleDir, styleName, tilesetIds })
     const rel = relative(dirs.styles, join(styleDir, 'style.json'))
     stylesCfg[styleName] = { style: rel }
