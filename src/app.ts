@@ -4,7 +4,6 @@ import helmet from 'helmet'
 // @ts-expect-error no types shipped with tileserver-gl-light
 import { server as tileserverGl } from 'tileserver-gl-light/src/server.js'
 import log from '#log'
-import config from '#config'
 import { buildTileserverConfig } from './build-config.ts'
 
 interface TileserverRunning {
@@ -20,12 +19,10 @@ export const createApp = async (): Promise<Express> => {
   // an internal http server — there is no "just give me the app" entry point. We bind it to
   // an ephemeral port, wait for its async init, then close the inner socket and reuse the
   // still-fully-wired express app as middleware under our own outer http server.
-  const publicUrl = config.basePath ? `${config.basePath}/` : undefined
   const running = await (tileserverGl({
     config: tileserverConfig,
     port: 0,
-    silent: true,
-    publicUrl
+    silent: true
   }) as Promise<TileserverRunning>)
   await running.startupPromise
   await new Promise<void>((resolve, reject) => {
@@ -50,11 +47,28 @@ export const createApp = async (): Promise<Express> => {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 
-  if (config.basePath) {
-    app.use(config.basePath, tsApp)
-  } else {
-    app.use(tsApp)
-  }
+  // temporary: log X-Forwarded-* headers to debug proxy setup
+  app.use((req, _res, next) => {
+    const fwdHeaders: Record<string, string | undefined> = {
+      'X-Forwarded-Host': req.get('X-Forwarded-Host'),
+      'X-Forwarded-Proto': req.get('X-Forwarded-Proto'),
+      'X-Forwarded-Port': req.get('X-Forwarded-Port'),
+      'X-Forwarded-Path': req.get('X-Forwarded-Path'),
+      'X-Forwarded-Url': req.get('X-Forwarded-Url'),
+      'X-Forwarded-For': req.get('X-Forwarded-For'),
+      'X-Forwarded-Protocol': req.get('X-Forwarded-Protocol'),
+      'X-Forwarded-Prefix': req.get('X-Forwarded-Prefix')
+    }
+    const set = Object.entries(fwdHeaders).filter(([, v]) => v)
+    if (set.length) {
+      log.info(`[fwd-debug] ${req.method} ${req.url} ${JSON.stringify(Object.fromEntries(set))}`)
+    } else {
+      log.info(`[fwd-debug] ${req.method} ${req.url} (no X-Forwarded-* headers)`)
+    }
+    next()
+  })
+
+  app.use(tsApp)
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     log.error('unhandled request error', err)

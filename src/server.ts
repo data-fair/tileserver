@@ -22,7 +22,7 @@ export const start = async () => {
   server.listen(config.port)
   await eventPromise(server, 'listening')
 
-  log.info(`tileserver listening on port ${config.port}${config.basePath ? `, basePath=${config.basePath}` : ''}`)
+  log.info(`tileserver listening on port ${config.port}`)
 }
 
 export const stop = async () => {
