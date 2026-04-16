@@ -50,7 +50,11 @@ export const createApp = async (): Promise<Express> => {
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 
-  app.use(tsApp)
+  if (config.basePath) {
+    app.use(config.basePath, tsApp)
+  } else {
+    app.use(tsApp)
+  }
 
   app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
     log.error('unhandled request error', err)
