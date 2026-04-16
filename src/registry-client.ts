@@ -21,7 +21,7 @@ const ax = axiosBuilder({
 
 export const listArtefacts = async (query: Record<string, string | number>): Promise<Artefact[]> => {
   const res = await ax.get<ListResponse>('/api/v1/artefacts', {
-    params: { ...query, size: 1000 }
+    params: { ...query, size: 100 }
   })
   return res.data.results
 }
