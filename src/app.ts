@@ -38,9 +38,11 @@ export const createApp = async (): Promise<Express> => {
     contentSecurityPolicy: {
       useDefaults: true,
       directives: {
+        'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
         'img-src': ["'self'", 'data:', 'blob:'],
         'worker-src': ["'self'", 'blob:'],
-        'child-src': ["'self'", 'blob:']
+        'child-src': ["'self'", 'blob:'],
+        'connect-src': ["'self'", 'https:']
       }
     },
     crossOriginEmbedderPolicy: false
