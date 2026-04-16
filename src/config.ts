@@ -15,7 +15,8 @@ const EnvSchema = z.object({
   TILESET_ALIASES: z.string().default('').transform(parseAliases),
   STYLE_INCLUDE: z.string().default('').transform(parseList),
   STYLE_EXCLUDE: z.string().default('').transform(parseList),
-  STYLE_ALIASES: z.string().default('').transform(parseAliases)
+  STYLE_ALIASES: z.string().default('').transform(parseAliases),
+  BASE_PATH: z.string().default('/tileserver')
 })
 
 const parsed = EnvSchema.safeParse(process.env)
@@ -45,7 +46,8 @@ const config = {
   tilesetAliases: env.TILESET_ALIASES,
   styleInclude: env.STYLE_INCLUDE,
   styleExclude: env.STYLE_EXCLUDE,
-  styleAliases: env.STYLE_ALIASES
+  styleAliases: env.STYLE_ALIASES,
+  basePath: env.BASE_PATH
 } as const
 
 export default config
