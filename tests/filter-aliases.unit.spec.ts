@@ -26,33 +26,33 @@ test.describe('parseAliases', () => {
     expect(parseAliases('')).toEqual({})
   })
 
-  test('parses source:alias pairs', () => {
-    expect(parseAliases('world:france')).toEqual({ world: 'france' })
+  test('parses alias:source pairs', () => {
+    expect(parseAliases('france:world')).toEqual({ world: 'france' })
   })
 
   test('parses multiple pairs', () => {
-    expect(parseAliases('world:france,contours-2026:contours')).toEqual({
+    expect(parseAliases('france:world,contours:contours-2026')).toEqual({
       world: 'france',
       'contours-2026': 'contours'
     })
   })
 
   test('trims whitespace around keys and values', () => {
-    expect(parseAliases(' world : france , foo : bar ')).toEqual({
+    expect(parseAliases(' france : world , bar : foo ')).toEqual({
       world: 'france',
       foo: 'bar'
     })
   })
 
   test('skips malformed entries without colon', () => {
-    expect(parseAliases('good:pair,nocolon,also:fine')).toEqual({
+    expect(parseAliases('pair:good,nocolon,fine:also')).toEqual({
       good: 'pair',
       also: 'fine'
     })
   })
 
-  test('skips entries with empty source or alias', () => {
-    expect(parseAliases(':alias,source:,ok:ok')).toEqual({ ok: 'ok' })
+  test('skips entries with empty alias or source', () => {
+    expect(parseAliases(':source,alias:,ok:ok')).toEqual({ ok: 'ok' })
   })
 })
 

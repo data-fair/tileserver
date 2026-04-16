@@ -53,7 +53,7 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
 
   if (config.tilesetInclude.length) log.info(`TILESET_INCLUDE: ${config.tilesetInclude.join(', ')}`)
   if (config.tilesetExclude.length) log.info(`TILESET_EXCLUDE: ${config.tilesetExclude.join(', ')}`)
-  if (Object.keys(config.tilesetAliases).length) log.info(`TILESET_ALIASES: ${Object.entries(config.tilesetAliases).map(([s, a]) => `${s}:${a}`).join(', ')}`)
+  if (Object.keys(config.tilesetAliases).length) log.info(`TILESET_ALIASES: ${Object.entries(config.tilesetAliases).map(([s, a]) => `${a}:${s}`).join(', ')}`)
 
   const filteredTilesets = filterArtefacts(tilesets, config.tilesetInclude, config.tilesetExclude)
   if (filteredTilesets.length !== tilesets.length) {
@@ -79,7 +79,7 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
 
   if (config.styleInclude.length) log.info(`STYLE_INCLUDE: ${config.styleInclude.join(', ')}`)
   if (config.styleExclude.length) log.info(`STYLE_EXCLUDE: ${config.styleExclude.join(', ')}`)
-  if (Object.keys(config.styleAliases).length) log.info(`STYLE_ALIASES: ${Object.entries(config.styleAliases).map(([s, a]) => `${s}:${a}`).join(', ')}`)
+  if (Object.keys(config.styleAliases).length) log.info(`STYLE_ALIASES: ${Object.entries(config.styleAliases).map(([s, a]) => `${a}:${s}`).join(', ')}`)
 
   const filteredStyles = filterArtefacts(styles, config.styleInclude, config.styleExclude)
   if (filteredStyles.length !== styles.length) {

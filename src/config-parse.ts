@@ -5,8 +5,8 @@ export const parseAliases = (v: string): Record<string, string> => {
   if (!v) return {}
   const map: Record<string, string> = {}
   for (const pair of v.split(',')) {
-    const [source, alias] = pair.split(':').map(s => s.trim())
-    if (source && alias) map[source] = alias
+    const [alias, source] = pair.split(':').map(s => s.trim())
+    if (alias && source) map[source] = alias
   }
   return map
 }

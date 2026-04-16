@@ -52,7 +52,7 @@ Core: `REGISTRY_URL`, `REGISTRY_SECRET`, `DATA_DIR`, `FONTS_DIR`, `PORT`, `LOG_L
 
 Filtering & aliases (comma-separated):
 - `TILESET_INCLUDE` / `TILESET_EXCLUDE` — whitelist/blacklist tileset IDs
-- `TILESET_ALIASES` — `source:alias` pairs to remap tileset serving keys
+- `TILESET_ALIASES` — `alias:source` pairs to remap tileset serving keys
 - `STYLE_INCLUDE` / `STYLE_EXCLUDE` / `STYLE_ALIASES` — same for styles
 
 ## Testing
