@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { parseList, parseAliases } from './config-parse.ts'
 
 const EnvSchema = z.object({
   REGISTRY_URL: z.string().url(),
@@ -9,28 +10,12 @@ const EnvSchema = z.object({
   LOG_LEVEL: z.enum(['trace', 'debug', 'info', 'warn', 'error']).default('info'),
   OBSERVER_ACTIVE: z.enum(['true', 'false']).default('true').transform(v => v === 'true'),
   OBSERVER_PORT: z.coerce.number().int().positive().default(9090),
-  TILESET_INCLUDE: z.string().default('').transform(v => v ? v.split(',').map(s => s.trim()).filter(Boolean) : []),
-  TILESET_EXCLUDE: z.string().default('').transform(v => v ? v.split(',').map(s => s.trim()).filter(Boolean) : []),
-  TILESET_ALIASES: z.string().default('').transform(v => {
-    if (!v) return {} as Record<string, string>
-    const map: Record<string, string> = {}
-    for (const pair of v.split(',')) {
-      const [source, alias] = pair.split(':').map(s => s.trim())
-      if (source && alias) map[source] = alias
-    }
-    return map
-  }),
-  STYLE_INCLUDE: z.string().default('').transform(v => v ? v.split(',').map(s => s.trim()).filter(Boolean) : []),
-  STYLE_EXCLUDE: z.string().default('').transform(v => v ? v.split(',').map(s => s.trim()).filter(Boolean) : []),
-  STYLE_ALIASES: z.string().default('').transform(v => {
-    if (!v) return {} as Record<string, string>
-    const map: Record<string, string> = {}
-    for (const pair of v.split(',')) {
-      const [source, alias] = pair.split(':').map(s => s.trim())
-      if (source && alias) map[source] = alias
-    }
-    return map
-  })
+  TILESET_INCLUDE: z.string().default('').transform(parseList),
+  TILESET_EXCLUDE: z.string().default('').transform(parseList),
+  TILESET_ALIASES: z.string().default('').transform(parseAliases),
+  STYLE_INCLUDE: z.string().default('').transform(parseList),
+  STYLE_EXCLUDE: z.string().default('').transform(parseList),
+  STYLE_ALIASES: z.string().default('').transform(parseAliases)
 })
 
 const parsed = EnvSchema.safeParse(process.env)

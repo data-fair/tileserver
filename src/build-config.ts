@@ -6,6 +6,7 @@ import config from '#config'
 import log from '#log'
 import { listArtefacts, type Artefact } from './registry-client.ts'
 import { normalizeStyle } from './style-normalize.ts'
+import { filterArtefacts } from './config-parse.ts'
 
 export interface TileserverConfig {
   options: {
@@ -22,13 +23,6 @@ export interface TileserverConfig {
   }
   styles: Record<string, { style: string }>
   data: Record<string, { mbtiles: string }>
-}
-
-const filterArtefacts = (artefacts: Artefact[], include: string[], exclude: string[]): Artefact[] => {
-  let filtered = artefacts
-  if (include.length) filtered = filtered.filter(a => include.includes(a._id))
-  if (exclude.length) filtered = filtered.filter(a => !exclude.includes(a._id))
-  return filtered
 }
 
 const stylePackageName = (a: Artefact): string => {
@@ -57,9 +51,13 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
   const styles = await listArtefacts({ category: 'maplibre-style', format: 'file' })
   log.info(`found ${styles.length} styles`)
 
+  if (config.tilesetInclude.length) log.info(`TILESET_INCLUDE: ${config.tilesetInclude.join(', ')}`)
+  if (config.tilesetExclude.length) log.info(`TILESET_EXCLUDE: ${config.tilesetExclude.join(', ')}`)
+  if (Object.keys(config.tilesetAliases).length) log.info(`TILESET_ALIASES: ${Object.entries(config.tilesetAliases).map(([s, a]) => `${s}:${a}`).join(', ')}`)
+
   const filteredTilesets = filterArtefacts(tilesets, config.tilesetInclude, config.tilesetExclude)
   if (filteredTilesets.length !== tilesets.length) {
-    log.info(`filtered to ${filteredTilesets.length} tilesets`)
+    log.info(`filtered to ${filteredTilesets.length} tilesets: ${filteredTilesets.map(t => t._id).join(', ')}`)
   }
 
   const data: TileserverConfig['data'] = {}
@@ -79,9 +77,13 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
     tilesetIds.add(dataKey)
   }
 
+  if (config.styleInclude.length) log.info(`STYLE_INCLUDE: ${config.styleInclude.join(', ')}`)
+  if (config.styleExclude.length) log.info(`STYLE_EXCLUDE: ${config.styleExclude.join(', ')}`)
+  if (Object.keys(config.styleAliases).length) log.info(`STYLE_ALIASES: ${Object.entries(config.styleAliases).map(([s, a]) => `${s}:${a}`).join(', ')}`)
+
   const filteredStyles = filterArtefacts(styles, config.styleInclude, config.styleExclude)
   if (filteredStyles.length !== styles.length) {
-    log.info(`filtered to ${filteredStyles.length} styles`)
+    log.info(`filtered to ${filteredStyles.length} styles: ${filteredStyles.map(s => s._id).join(', ')}`)
   }
 
   const stylesCfg: TileserverConfig['styles'] = {}
