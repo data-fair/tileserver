@@ -4,6 +4,7 @@ import helmet from 'helmet'
 // @ts-expect-error no types shipped with tileserver-gl-light
 import { server as tileserverGl } from 'tileserver-gl-light/src/server.js'
 import log from '#log'
+import config from '#config'
 import { buildTileserverConfig } from './build-config.ts'
 
 interface TileserverRunning {
@@ -22,7 +23,8 @@ export const createApp = async (): Promise<Express> => {
   const running = await (tileserverGl({
     config: tileserverConfig,
     port: 0,
-    silent: true
+    silent: true,
+    publicUrl: config.publicUrl
   }) as Promise<TileserverRunning>)
   await running.startupPromise
   await new Promise<void>((resolve, reject) => {

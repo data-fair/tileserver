@@ -107,6 +107,7 @@ const globalSetup = async (): Promise<void> => {
       PORT: String(tileserverPort),
       DATA_DIR: dataDir,
       FONTS_DIR: fontsDir,
+      PUBLIC_URL: '/',
       OBSERVER_ACTIVE: 'false',
       LOG_LEVEL: 'info',
       NODE_ENV: 'test'

@@ -16,6 +16,7 @@ const EnvSchema = z.object({
   STYLE_INCLUDE: z.string().default('').transform(parseList),
   STYLE_EXCLUDE: z.string().default('').transform(parseList),
   STYLE_ALIASES: z.string().default('').transform(parseAliases),
+  PUBLIC_URL: z.string().default('/tileserver/')
 })
 
 const parsed = EnvSchema.safeParse(process.env)
@@ -46,6 +47,7 @@ const config = {
   styleInclude: env.STYLE_INCLUDE,
   styleExclude: env.STYLE_EXCLUDE,
   styleAliases: env.STYLE_ALIASES,
+  publicUrl: env.PUBLIC_URL
 } as const
 
 export default config
