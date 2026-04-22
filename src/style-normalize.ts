@@ -1,4 +1,4 @@
-import { readFile, writeFile } from 'node:fs/promises'
+import { access, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 interface StyleJson {
@@ -10,11 +10,10 @@ interface StyleJson {
 
 export interface NormalizeOpts {
   styleDir: string
-  styleName: string
   tilesetKeys: Map<string, string>
 }
 
-export const normalizeStyle = async ({ styleDir, styleName, tilesetKeys }: NormalizeOpts): Promise<void> => {
+export const normalizeStyle = async ({ styleDir, tilesetKeys }: NormalizeOpts): Promise<void> => {
   const stylePath = join(styleDir, 'style.json')
   const raw = await readFile(stylePath, 'utf-8')
   const style: StyleJson = JSON.parse(raw)
@@ -35,7 +34,13 @@ export const normalizeStyle = async ({ styleDir, styleName, tilesetKeys }: Norma
   }
 
   style.glyphs = '{fontstack}/{range}.pbf'
-  style.sprite = `/sprites/${styleName}/sprite`
+
+  const hasLocalSprite = await access(join(styleDir, 'sprites', 'sprite.json')).then(() => true, () => false)
+  if (hasLocalSprite) {
+    style.sprite = '{styleJsonFolder}/sprites/sprite'
+  } else {
+    delete style.sprite
+  }
 
   await writeFile(stylePath, JSON.stringify(style, null, 2))
 }

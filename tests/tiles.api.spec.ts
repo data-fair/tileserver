@@ -47,6 +47,7 @@ test('GET /styles/basic/style.json returns the normalized style', async () => {
   // stripped paths and the `mbtiles://` source URL to absolute local URLs at serve time.
   expect(style.glyphs).toContain('{fontstack}/{range}.pbf')
   expect(style.glyphs).not.toContain('example.invalid')
+  expect(style.sprite).toContain('/styles/basic/sprite')
   expect(style.sprite).not.toContain('example.invalid')
   expect(style.sources.openmaptiles.url).toContain('/data/world.json')
 })

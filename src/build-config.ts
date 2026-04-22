@@ -107,7 +107,7 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
       await extractTarball(createReadStream(tarballPath), styleDir)
     }
     const styleName = config.styleAliases[s._id] ?? stylePackageName(s)
-    await normalizeStyle({ styleDir, styleName, tilesetKeys })
+    await normalizeStyle({ styleDir, tilesetKeys })
     const rel = relative(dirs.styles, join(styleDir, 'style.json'))
     stylesCfg[styleName] = { style: rel }
   }
