@@ -19,6 +19,8 @@ services:
       MONGO_URL: mongodb://localhost:${MONGO_PORT}/registry
       OBSERVER_ACTIVE: "false"
       SECRET_KEYS_INTERNAL_SERVICES: ${REGISTRY_SECRET}
+      CIPHER_PASSWORD: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      API_KEYS_SALT: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 volumes:
   mongo-data:

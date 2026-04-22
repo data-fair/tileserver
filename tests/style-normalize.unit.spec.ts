@@ -22,7 +22,7 @@ test('normalizeStyle rewrites sources, glyphs and sprite', async () => {
     await normalizeStyle({
       styleDir: dir,
       styleName: 'positron',
-      tilesetIds: new Set(['world'])
+      tilesetKeys: new Map([['world', 'world']])
     })
 
     const rewritten = JSON.parse(await readFile(join(dir, 'style.json'), 'utf-8'))

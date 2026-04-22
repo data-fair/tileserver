@@ -25,9 +25,12 @@ export interface TileserverConfig {
   data: Record<string, { mbtiles: string }>
 }
 
+const stripTilesetPrefix = (id: string): string => id.replace(/^tileset-/, '')
+const stripStylePrefix = (name: string): string => name.replace(/^maplibre-style-/, '')
+
 const stylePackageName = (a: Artefact): string => {
   const name = a.name.replace(/^@[^/]+\//, '')
-  return name.replace(/[^a-z0-9_-]/gi, '-')
+  return stripStylePrefix(name.replace(/[^a-z0-9_-]/gi, '-'))
 }
 
 export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
@@ -61,7 +64,7 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
   }
 
   const data: TileserverConfig['data'] = {}
-  const tilesetIds = new Set<string>()
+  const tilesetKeys = new Map<string, string>()
   for (const t of filteredTilesets) {
     log.info(`ensuring tileset ${t._id}...`)
     const { downloaded } = await ensureArtefactFile({
@@ -72,9 +75,9 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
       fileName: `${t._id}.mbtiles`
     })
     if (downloaded) log.info(`tileset ${t._id} downloaded`)
-    const dataKey = config.tilesetAliases[t._id] ?? t._id
+    const dataKey = config.tilesetAliases[t._id] ?? stripTilesetPrefix(t._id)
     data[dataKey] = { mbtiles: `${t._id}.mbtiles` }
-    tilesetIds.add(dataKey)
+    tilesetKeys.set(t._id, dataKey)
   }
 
   if (config.styleInclude.length) log.info(`STYLE_INCLUDE: ${config.styleInclude.join(', ')}`)
@@ -104,7 +107,7 @@ export const buildTileserverConfig = async (): Promise<TileserverConfig> => {
       await extractTarball(createReadStream(tarballPath), styleDir)
     }
     const styleName = config.styleAliases[s._id] ?? stylePackageName(s)
-    await normalizeStyle({ styleDir, styleName, tilesetIds })
+    await normalizeStyle({ styleDir, styleName, tilesetKeys })
     const rel = relative(dirs.styles, join(styleDir, 'style.json'))
     stylesCfg[styleName] = { style: rel }
   }

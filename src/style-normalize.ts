@@ -11,10 +11,10 @@ interface StyleJson {
 export interface NormalizeOpts {
   styleDir: string
   styleName: string
-  tilesetIds: Set<string>
+  tilesetKeys: Map<string, string>
 }
 
-export const normalizeStyle = async ({ styleDir, styleName, tilesetIds }: NormalizeOpts): Promise<void> => {
+export const normalizeStyle = async ({ styleDir, styleName, tilesetKeys }: NormalizeOpts): Promise<void> => {
   const stylePath = join(styleDir, 'style.json')
   const raw = await readFile(stylePath, 'utf-8')
   const style: StyleJson = JSON.parse(raw)
@@ -26,9 +26,10 @@ export const normalizeStyle = async ({ styleDir, styleName, tilesetIds }: Normal
       const ref = typeof source.url === 'string' ? source.url : undefined
       if (!ref) continue
       const match = ref.match(/^(?:mbtiles:\/\/\{?|artefact:)([^}]+)\}?$/)
-      const id = match?.[1] ?? (tilesetIds.has(ref) ? ref : undefined)
-      if (id && tilesetIds.has(id)) {
-        style.sources[key] = { ...source, url: `mbtiles://{${id}}` }
+      const id = match?.[1] ?? ref
+      const resolved = tilesetKeys.get(id)
+      if (resolved) {
+        style.sources[key] = { ...source, url: `mbtiles://{${resolved}}` }
       }
     }
   }
