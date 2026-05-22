@@ -1,6 +1,6 @@
 {
   "name": "@data-fair/tileserver",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Vector tile server for the data-fair stack. Wraps tileserver-gl-light and pulls tilesets and styles from a data-fair/registry instance at boot.",
   "type": "module",
   "license": "AGPL-3.0-only",
